@@ -7,36 +7,7 @@ from streamlit_option_menu import option_menu
 # 페이지 설정
 st.set_page_config(page_title="다함께돌봄센터 도장 관리 시스템", page_icon="🔖", layout="wide")
 
-# --- 화사한 배경화면 및 스타일 CSS 정의 ---
-BACKGROUND_IMAGE_URL = "https://images.unsplash.com/photo-1516627145497-ae6968895b74?auto=format&fit=crop&q=80&w=1200"
-
-# f-string 충돌을 방지하기 위해 일반 문자열로 CSS 작성
-css_code = """
-<style>
-.stApp {
-    background-image: linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)), url("#BG_URL#");
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
-}
-h1, h2, h3, p, span {
-    color: #2C3E50 !important;
-}
-.center-promo {
-    background-color: #FFEAA7;
-    padding: 15px;
-    border-radius: 10px;
-    text-align: center;
-    font-weight: bold;
-    color: #D35400 !important;
-    margin-bottom: 20px;
-}
-</style>
-""".replace("#BG_URL#", BACKGROUND_IMAGE_URL)
-
-st.markdown(css_code, unsafe_allow_index=True)
-
-# --- Supabase 연결 설정 ---
+# --- 에러 방지를 위해 Supabase 설정부터 안전하게 로드 ---
 try:
     url: str = st.secrets["SUPABASE_URL"]
     key: str = st.secrets["SUPABASE_KEY"]
@@ -67,7 +38,9 @@ def load_data(center_id):
 # ==================== 로그인 화면 ====================
 if not st.session_state.logged_in:
     st.title("🔖 돌봄센터 통합 도장 관리 시스템")
-    st.markdown('<div class="center-promo">🌈 안녕하세요! 다함께돌봄센터 34호점 관리 시스템 플랫폼입니다.</div>', unsafe_allow_index=True)
+    
+    # 에러가 발생하던 CSS 스타일 대신 Streamlit 순수 컴포넌트로 깔끔하게 배너 구현
+    st.warning("🌈 안녕하세요! 다함께돌봄센터 34호점 관리 시스템 플랫폼입니다.")
     
     st.subheader("🔑 로그인")
     st.write("각 돌봄센터별 지정된 계정으로 로그인해 주세요.")
@@ -88,7 +61,7 @@ if not st.session_state.logged_in:
 
 # ==================== 로그인 성공 후 메인 화면 ====================
 with st.sidebar:
-    st.markdown(f'<div class="center-promo">🏠 다함께돌봄센터 34호점<br><span style="font-size:0.8rem;">현재 접속: {st.session_state.center_id}</span></div>', unsafe_allow_index=True)
+    st.info(f"🏠 다함께돌봄센터 34호점\n\n현재 접속: {st.session_state.center_id}")
     
     selected = option_menu(
         "메인 메뉴", 
