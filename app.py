@@ -21,19 +21,19 @@ if "logged_in" not in st.session_state:
 if "center_id" not in st.session_state:
     st.session_state.center_id = ""
 
-# --- 데이터 불러오기 함수 (아이 이름순 정렬 적용) ---
+# --- 데이터 불러오기 함수 (아이 이름순 정렬) ---
 def load_data(center_id):
-    # 다른 센터와 섞이지 않게 내 center_id 데이터만 가져와서, 'stamp_name'(아이 이름) 오름차순(가나다순) 정렬!
     response = supabase.table("stamps").select("*").eq("center_id", center_id).order("stamp_name").execute()
     data = response.data
     
     if data:
         df = pd.DataFrame(data)
-        df = df[["stamp_id", "stamp_name", "owner", "reg_date", "status"]]
-        df.columns = ["고유 ID", "아이 이름 (항목)", "담당 선생님", "등록일", "도장 수량 / 상태"]
+        # 필요한 컬럼만 선택 (ID 제외)
+        df = df[["stamp_name", "owner", "reg_date", "status"]]
+        df.columns = ["아이 이름", "담당 선생님", "등록일", "도장 수량 / 상태"]
         return df
     else:
-        return pd.DataFrame(columns=["고유 ID", "아이 이름 (항목)", "담당 선생님", "등록일", "도장 수량 / 상태"])
+        return pd.DataFrame(columns=["아이 이름", "담당 선생님", "등록일", "도장 수량 / 상태"])
 
 # ==================== 1. 로그인 화면 ====================
 if not st.session_state.logged_in:
@@ -57,7 +57,6 @@ if not st.session_state.logged_in:
 
 # ==================== 2. 로그인 성공 후 올인원 메인 화면 ====================
 
-# 상단 사이드바 - 심플하게 소속 표시 및 로그아웃 버튼만 배치
 with st.sidebar:
     st.info(f"🏠 소속: {st.session_state.center_id}\n\n오늘도 아이들과 좋은 하루 보내세요! ❤️")
     if st.button("로그아웃"):
@@ -67,7 +66,7 @@ with st.sidebar:
 
 # 메인 타이틀
 st.title(f"📊 {st.session_state.center_id} 통합 도장 대시보드")
-st.write("아이들의 도장/칭찬 스탬프 현황을 한 눈에 관리하는 올인원 대방입니다.")
+st.write("아이들의 도장/칭찬 스탬프 현황을 한 눈에 관리하는 올인원 공간입니다.")
 st.markdown("---")
 
 # 실시간 데이터 로드
@@ -77,23 +76,21 @@ df = load_data(st.session_state.center_id)
 col_add, col_del = st.columns(2)
 
 with col_add:
-    st.subheader("➕ 새로운 아이(도장) 추가")
+    st.subheader("➕ 새로운 아이 추가")
     with st.form("add_child_form", clear_on_submit=True):
-        new_id = st.text_input("고유 식별 ID", placeholder="예: CHILD-001, 34-01")
         new_name = st.text_input("아이 이름", placeholder="예: 홍길동")
         new_owner = st.text_input("담당 선생님 성함", placeholder="예: 김선생님")
         new_status = st.text_input("초기 도장 개수 설정", value="0 개")
         
         add_btn = st.form_submit_button("대시보드에 추가하기")
         if add_btn:
-            if new_id and new_name and new_owner:
-                # 중복 검사
-                check_res = supabase.table("stamps").select("stamp_id").eq("stamp_id", new_id).eq("center_id", st.session_state.center_id).execute()
+            if new_name and new_owner:
+                # 이름 중복 검사 (같은 센터 내에서만)
+                check_res = supabase.table("stamps").select("stamp_name").eq("stamp_name", new_name).eq("center_id", st.session_state.center_id).execute()
                 if check_res.data:
-                    st.error("❌ 이미 존재하는 고유 ID입니다. 다른 ID를 입력해 주세요.")
+                    st.error("❌ 이미 대시보드에 존재하는 아이 이름입니다.")
                 else:
                     new_data = {
-                        "stamp_id": new_id,
                         "stamp_name": new_name,
                         "owner": new_owner,
                         "reg_date": datetime.now().strftime("%Y-%m-%d"),
@@ -101,23 +98,20 @@ with col_add:
                         "center_id": st.session_state.center_id
                     }
                     supabase.table("stamps").insert(new_data).execute()
-                    st.success(f"🎉 '{new_name}' 어린이가 가나다순 목록에 추가되었습니다!")
+                    st.toast(f"🎉 '{new_name}' 어린이가 목록에 추가되었습니다!")
                     st.rerun()
             else:
                 st.warning("⚠️ 모든 빈칸을 채워주세요.")
 
 with col_del:
-    st.subheader("❌ 아이(도장) 삭제")
+    st.subheader("❌ 아이 삭제")
     if len(df) > 0:
-        # 삭제할 아이 선택 박스
-        del_target_name = st.selectbox("삭제할 아이 이름을 선택하세요", df["아이 이름 (항목)"].values)
-        # 선택한 아이의 고유 ID 추출
-        del_target_id = df[df["아이 이름 (항목)"] == del_target_name]["고유 ID"].values[0]
+        del_target_name = st.selectbox("삭제할 아이 이름을 선택하세요", df["아이 이름"].values)
         
-        st.write(f"선택된 아이: **{del_target_name}** (ID: {del_target_id})")
+        st.write(f"선택된 아이: **{del_target_name}**")
         if st.button("🚨 명단에서 완전히 삭제"):
-            supabase.table("stamps").delete().eq("stamp_id", del_target_id).eq("center_id", st.session_state.center_id).execute()
-            st.success(f"🔥 '{del_target_name}' 어린이의 데이터가 삭제되었습니다.")
+            supabase.table("stamps").delete().eq("stamp_name", del_target_name).eq("center_id", st.session_state.center_id).execute()
+            st.toast(f"🔥 '{del_target_name}' 어린이의 데이터가 삭제되었습니다.")
             st.rerun()
     else:
         st.info("삭제할 명단이 없습니다.")
@@ -128,7 +122,6 @@ st.markdown("---")
 st.subheader("📋 실시간 도장 현황판 (아이 이름순 정렬)")
 
 if len(df) > 0:
-    # 테이블 표 형태로 깔끔하게 렌더링
     st.dataframe(df, use_container_width=True, hide_index=True)
 else:
     st.info("현재 등록된 아이들이 없습니다. 위의 추가 폼을 이용해 첫 아이를 등록해 주세요!")
@@ -142,16 +135,13 @@ if len(df) > 0:
     col_select, col_ctrl = st.columns([1, 2])
     
     with col_select:
-        # 수량을 조절할 아이 선택
-        edit_target_name = st.selectbox("도장을 조절할 아이를 고르세요", df["아이 이름 (항목)"].values)
-        edit_target_id = df[df["아이 이름 (항목)"] == edit_target_name]["고유 ID"].values[0]
-        current_status = df[df["고유 ID"] == edit_target_id]["도장 수량 / 상태"].values[0]
+        edit_target_name = st.selectbox("도장을 조절할 아이를 고르세요", df["아이 이름"].values)
+        current_status = df[df["아이 이름"] == edit_target_name]["도장 수량 / 상태"].values[0]
         st.write(f"현재 보유량: **{current_status}**")
 
     with col_ctrl:
         c1, c2, c3 = st.columns([1, 1, 2])
         
-        # 숫자와 단위(개, 번 등) 분리 처리
         try:
             current_num = int(''.join(filter(str.isdigit, current_status)))
             unit = ''.join(filter(lambda x: not x.isdigit(), current_status)).strip()
@@ -162,25 +152,24 @@ if len(df) > 0:
             
         if c1.button("➕ 1개 늘리기", use_container_width=True):
             new_val = f"{current_num + 1} {unit}"
-            supabase.table("stamps").update({"status": new_val}).eq("stamp_id", edit_target_id).eq("center_id", st.session_state.center_id).execute()
-            st.success(f"👍 {edit_target_name} 어린이의 도장이 {new_val}(으)로 증가했습니다!")
+            supabase.table("stamps").update({"status": new_val}).eq("stamp_name", edit_target_name).eq("center_id", st.session_state.center_id).execute()
+            st.toast(f"👍 {edit_target_name}: {new_val}")
             st.rerun()
             
         if c2.button("➖ 1개 줄이기", use_container_width=True):
             if current_num > 0:
                 new_val = f"{current_num - 1} {unit}"
-                supabase.table("stamps").update({"status": new_val}).eq("stamp_id", edit_target_id).eq("center_id", st.session_state.center_id).execute()
-                st.success(f"👎 {edit_target_name} 어린이의 도장이 {new_val}(으)로 감소했습니다!")
+                supabase.table("stamps").update({"status": new_val}).eq("stamp_name", edit_target_name).eq("center_id", st.session_state.center_id).execute()
+                st.toast(f"👎 {edit_target_name}: {new_val}")
                 st.rerun()
             else:
                 st.warning("이미 도장 개수가 0개입니다.")
                 
         with c3:
-            # 텍스트로 자유롭게 상태 변경하고 싶을 때 (예: '칭찬스티커 다 모음', '보상 완료' 등)
             new_text_status = st.text_input("상태 직접 입력", value=current_status, label_visibility="collapsed")
             if st.button("✏️ 상태 텍스트 변경"):
-                supabase.table("stamps").update({"status": new_text_status}).eq("stamp_id", edit_target_id).eq("center_id", st.session_state.center_id).execute()
-                st.success("상태가 텍스트로 업데이트되었습니다.")
+                supabase.table("stamps").update({"status": new_text_status}).eq("stamp_name", edit_target_name).eq("center_id", st.session_state.center_id).execute()
+                st.toast("✏️ 상태가 변경되었습니다.")
                 st.rerun()
 else:
     st.info("아이를 먼저 추가하면 수량 조절 창이 활성화됩니다.")
