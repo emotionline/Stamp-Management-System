@@ -38,21 +38,21 @@ def load_data(center_id):
 # ==================== 1. 로그인 화면 ====================
 if not st.session_state.logged_in:
     st.title("🔖 돌봄센터 통합 도장 관리 시스템")
-    st.warning("🌈 안녕하세요! 다함께돌봄센터 34호점 관리 시스템 플랫폼입니다.")
+    st.warning("🌈 안녕하세요! 다함께돌봄센터 관리 시스템 플랫폼입니다.")
     
     st.subheader("🔑 로그인")
     with st.form("login_form"):
-        input_id = st.text_input("돌봄센터 ID", placeholder="예: center34")
+        input_id = st.text_input("돌봄센터 ID", placeholder="예: center__")
         input_pw = st.text_input("비밀번호", type="password")
-        login_btn = st.form_submit_button("로그인하기")
+        login_btn = st.form_submit_button("아이들을 만나러 ^^")
         
         if login_btn:
-            if input_id and input_pw == "1234":  # 임시 비밀번호 1234
+            if input_id and input_pw == "12345":  # 임시 비밀번호 12345
                 st.session_state.logged_in = True
                 st.session_state.center_id = input_id
                 st.rerun()
             else:
-                st.error("ID 또는 비밀번호가 틀렸습니다. (테스트용 비밀번호: 1234)")
+                st.error("ID 또는 비밀번호가 틀렸습니다.")
     st.stop()
 
 # ==================== 2. 로그인 성공 후 올인원 메인 화면 ====================
