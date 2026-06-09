@@ -62,4 +62,5 @@
 * **Instagram:** [재밌는 거 만드는 사람 🧑‍💻]
 <p align="center">
   <b>- 기술을 등에 업고, 아이들의 웃음을 지킵니다. -</b>
+  <b>- emotionline -</b>
 </p>
