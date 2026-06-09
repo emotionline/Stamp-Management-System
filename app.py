@@ -56,11 +56,13 @@ if not st.session_state.logged_in:
                         st.session_state.logged_in = True
                         st.session_state.center_id = input_id
                         st.rerun()
-                    # 기존 맛보기 테스트용 계정 예외 처리 유지 (비밀번호: 12345)
-                    elif input_pw == "12345":
+                    
+                    # 🎁 [체험용 치트키] 외부 사람들은 오직 'demo_center' 아이디로만 1234 접속이 가능합니다!
+                    elif input_id == "demo_center" and input_pw == "1234":
                         st.session_state.logged_in = True
                         st.session_state.center_id = input_id
                         st.rerun()
+                        
                     else:
                         st.error("❌ ID 또는 비밀번호가 일치하지 않습니다.")
                 else:
