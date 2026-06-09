@@ -6,22 +6,6 @@ from supabase import create_client, Client
 # 페이지 설정
 st.set_page_config(page_title="다함께돌봄센터 통합 도장 관리 시스템", page_icon="🔖", layout="wide")
 
-# ====================================================================
-# 🖼️ [배경 화면 설정 구역] - 오류가 절대 안 나도록 리스트 결합 방식으로 수정
-# ====================================================================
-BACKGROUND_IMAGE_URL = "https://images.unsplash.com/photo-1516627145497-ae6968895b74?auto=format&fit=crop&q=80&w=1200"
-
-css_parts = [
-    "<style>",
-    ".stApp { background-image: linear-gradient(rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.88)), url('",
-    BACKGROUND_IMAGE_URL,
-    "'); background-size: cover; background-position: center; background-attachment: fixed; }",
-    "h1, h2, h3, p, span, label, .stMarkdown { color: #2C3E50 !important; }",
-    "</style>"
-]
-st.markdown("".join(css_parts), unsafe_allow_index=True)
-# ====================================================================
-
 # --- Supabase 연결 설정 ---
 try:
     url: str = st.secrets["SUPABASE_URL"]
@@ -76,7 +60,9 @@ def save_log(center_id, stamp_name, owner, change_type, detail):
 # ==================== 1. 로그인 화면 ====================
 if not st.session_state.logged_in:
     st.title("🔖 돌봄센터 통합 도장 관리 시스템")
-    st.warning("🌈 안녕하세요! 다함께돌봄센터 관리 시스템 플랫폼입니다.")
+    
+    # 화사함을 더하기 위해 이모지와 Streamlit 공식 배너 디자인 활용
+    st.success("🌈 **안녕하세요! 다함께돌봄센터 관리 시스템 플랫폼입니다.** 바쁜 현장의 선생님들을 응원합니다!")
     
     st.subheader("🔑 로그인")
     with st.form("login_form"):
@@ -95,15 +81,15 @@ if not st.session_state.logged_in:
 
 # ==================== 2. 로그인 성공 후 올인원 메인 화면 ====================
 with st.sidebar:
-    st.info(f"🏠 소속: {st.session_state.center_id}\n\n오늘도 아이들과 좋은 하루 보내세요! ❤️")
+    st.info(f"🏠 **소속:** {st.session_state.center_id}\n\n오늘도 아이들과 좋은 하루 보내세요! ❤️")
     if st.button("로그아웃"):
         st.session_state.logged_in = False
         st.session_state.center_id = ""
         st.rerun()
 
-# 메인 타이틀
+# 메인 타이틀 구역 (따뜻하고 화사한 멘트 안내)
 st.title(f"📊 {st.session_state.center_id} 통합 도장 대시보드")
-st.write("아이들의 도장 현황 및 선생님들의 입력 히스토리를 관리하는 공간입니다.")
+st.markdown("✨ 아이들의 도장 현황 및 선생님들의 입력 히스토리를 한눈에 관리하는 안심 공간입니다.")
 st.markdown("---")
 
 df = load_data(st.session_state.center_id)
@@ -115,7 +101,7 @@ with col_add:
     st.subheader("➕ 새로운 아이 추가")
     with st.form("add_child_form", clear_on_submit=True):
         new_name = st.text_input("아이 이름", placeholder="예: 홍길동")
-        new_owner = st.text_input("담당 선생님 성함", placeholder="예: 김선생님")
+        new_owner = st.text_input("담당 선생님 성함", placeholder="예: 강정선 선생님")
         new_status = st.text_input("초기 도장 개수 설정", value="0 개")
         
         add_btn = st.form_submit_button("대시보드에 추가하기")
@@ -134,7 +120,7 @@ with col_add:
                     }
                     supabase.table("stamps").insert(new_data).execute()
                     save_log(st.session_state.center_id, new_name, new_owner, "아이추가", f"초기 수량: {new_status}")
-                    st.toast(f"🎉 '{new_name}' 어린이가 목록에 추가되었습니다!")
+                    st.toast(f"🎉 '{new_name}' 어린이가 명단에 추가되었습니다!")
                     st.rerun()
             else:
                 st.warning("⚠️ 모든 빈칸을 채워주세요.")
