@@ -8,32 +8,33 @@ from streamlit_option_menu import option_menu
 st.set_page_config(page_title="다함께돌봄센터 도장 관리 시스템", page_icon="🔖", layout="wide")
 
 # --- 화사한 배경화면 및 스타일 CSS 정의 ---
-# 배경에 어울리는 화사한 아이들 관련 일러스트/사진 URL을 넣었습니다. (추후 원하는 주소로 변경 가능)
 BACKGROUND_IMAGE_URL = "https://images.unsplash.com/photo-1516627145497-ae6968895b74?auto=format&fit=crop&q=80&w=1200"
 
-st.markdown(f"""
-    <style>
-    .stApp {{
-        background-image: linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)), url("{BACKGROUND_IMAGE_URL}");
-        background-size: cover;
-        background-position: center;
-        background-attachment: fixed;
-    }}
-    /* 글자 가독성을 위해 메인 타이틀 색상 지정 */
-    h1, h2, h3, p, span {{
-        color: #2C3E50 !important;
-    }}
-    .center-promo {{
-        background-color: #FFEAA7;
-        padding: 15px;
-        border-radius: 10px;
-        text-align: center;
-        font-weight: bold;
-        color: #D35400 !important;
-        margin-bottom: 20px;
-    }}
-    </style>
-""", unsafe_allow_index=True)
+# f-string 충돌을 방지하기 위해 일반 문자열로 CSS 작성
+css_code = """
+<style>
+.stApp {
+    background-image: linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)), url("#BG_URL#");
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+h1, h2, h3, p, span {
+    color: #2C3E50 !important;
+}
+.center-promo {
+    background-color: #FFEAA7;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: bold;
+    color: #D35400 !important;
+    margin-bottom: 20px;
+}
+</style>
+""".replace("#BG_URL#", BACKGROUND_IMAGE_URL)
+
+st.markdown(css_code, unsafe_allow_index=True)
 
 # --- Supabase 연결 설정 ---
 try:
@@ -77,8 +78,7 @@ if not st.session_state.logged_in:
         login_btn = st.form_submit_button("로그인하기")
         
         if login_btn:
-            # 테스트용 간단한 멀티 계정 예시 (실제 서비스 시 필요에 따라 유저 DB 연동 가능)
-            if input_id and input_pw == "1234":  # 임시로 비밀번호는 1234로 통일
+            if input_id and input_pw == "1234":  # 임시 비밀번호 1234
                 st.session_state.logged_in = True
                 st.session_state.center_id = input_id
                 st.rerun()
@@ -87,7 +87,6 @@ if not st.session_state.logged_in:
     st.stop()
 
 # ==================== 로그인 성공 후 메인 화면 ====================
-# 사이드바 상단 홍보 구역
 with st.sidebar:
     st.markdown(f'<div class="center-promo">🏠 다함께돌봄센터 34호점<br><span style="font-size:0.8rem;">현재 접속: {st.session_state.center_id}</span></div>', unsafe_allow_index=True)
     
@@ -137,7 +136,6 @@ elif selected == "새 도장 등록":
         
         if submit_btn:
             if stamp_id and stamp_name and owner:
-                # 동일 센터 내 중복 ID 체크
                 check_res = supabase.table("stamps").select("stamp_id").eq("stamp_id", stamp_id).eq("center_id", st.session_state.center_id).execute()
                 if check_res.data:
                     st.error("이미 존재하는 고유 ID입니다.")
@@ -167,14 +165,12 @@ elif selected == "도장 수량/상태 변경":
         
         st.write(f"현재 상태/수량: **{current_status}**")
         
-        # 만약 숫자가 포함되어 있다면 숫자를 증감시키고, 글자라면 상태 전환을 편하게 유도
         col1, col2 = st.columns(2)
         
         with col1:
             st.markdown("### 🔢 수량 퀵 증감 (+/-)")
             c1, c2 = st.columns(2)
             
-            # 숫자 추출 시도
             try:
                 current_num = int(''.join(filter(str.isdigit, current_status)))
                 unit = ''.join(filter(lambda x: not x.isdigit(), current_status)).strip()
