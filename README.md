@@ -5,7 +5,7 @@
 ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=Supabase&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=Python&logoColor=white)
 
-안녕하세요, 다함께돌봄센터에서 근무하고 있는 **emotionline(강정선)**입니다. 
+안녕하세요, 다함께돌봄센터에서 근무하고 있는 **emotionline**입니다. 
 바쁜 현장의 선생님들의 행정 부담을 줄이고, 아이들의 행복한 축제를 지키기 위해 이 플랫폼을 개발하게 되었습니다.
 
 ---
@@ -60,7 +60,7 @@
 
 * **YouTube:** [@emotionline]
 * **Instagram:** [재밌는 거 만드는 사람 🧑‍💻]
-<p align="center">
-  <b>- 기술을 등에 업고, 아이들의 웃음을 지킵니다. -</b>
-  <b>- emotionline -</b>
-</p>
+<div align="center">
+  <p><b>- 기술을 등에 업고, 아이들의 웃음을 지킵니다. -</b></p>
+  <p><b>- emotionline -</b></p>
+</div>
