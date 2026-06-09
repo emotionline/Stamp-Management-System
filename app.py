@@ -44,9 +44,9 @@ if not st.session_state.logged_in:
     # --- [탭 1] 로그인 구역 ---
     with tab1:
         with st.form("login_form"):
-            input_id = st.text_input("돌봄센터 ID", placeholder="가입하신 센터 ID를 입력하세요 (예: center34)")
+            input_id = st.text_input("돌봄센터 ID", placeholder="가입하신 센터 ID를 입력하세요 (예: center__)")
             input_pw = st.text_input("비밀번호", type="password")
-            login_btn = st.form_submit_button("아이들을 만나러 ^^")
+            login_btn = st.form_submit_button("🫶")
             
             if login_btn:
                 if input_id and input_pw:
@@ -70,7 +70,7 @@ if not st.session_state.logged_in:
     with tab2:
         st.write("우리 돌봄센터만의 전용 대시보드 계정을 생성합니다.")
         with st.form("register_center_form", clear_on_submit=True):
-            reg_id = st.text_input("희망하는 돌봄센터 ID", placeholder="영문, 숫자 조합 권장 (예: dharum34)")
+            reg_id = st.text_input("희망하는 돌봄센터 ID", placeholder="영문, 숫자 조합 권장 (예: center__)")
             reg_pw = st.text_input("접속 비밀번호 설정", type="password")
             reg_pw_confirm = st.text_input("비밀번호 확인", type="password")
             
@@ -118,7 +118,7 @@ with col_add:
     st.subheader("➕ 새로운 아이 추가")
     with st.form("add_child_form", clear_on_submit=True):
         new_name = st.text_input("아이 이름", placeholder="예: 홍길동")
-        new_owner = st.text_input("담당 선생님 성함", placeholder="예: 강정선 선생님")
+        new_owner = st.text_input("담당 선생님 성함", placeholder="예: ___ 선생님")
         new_status = st.text_input("초기 도장 개수 설정", value="0 개")
         
         add_btn = st.form_submit_button("대시보드에 추가하기")
