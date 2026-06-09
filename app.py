@@ -184,4 +184,80 @@ st.markdown("---")
 # ----------------- [중단 레이아웃] 가나다순 실시간 현황판 -----------------
 st.subheader("📋 실시간 도장 현황판 (아이 이름순 정렬)")
 if len(df) > 0:
-    st.dataframe(df, use_container_width=True,
+    st.dataframe(df, use_container_width=True, hide_index=True)
+else:
+    st.info("현재 등록된 아이들이 없습니다. 위의 추가 폼을 이용해 첫 아이를 등록해 주세요!")
+
+st.markdown("---")
+
+# ----------------- [하단 레이아웃] 수량 증감 / 상태 변경 / 보상 초기화 -----------------
+st.subheader("🔄 간편 도장 수량 조절 및 보상 초기화")
+if len(df) > 0:
+    col_select, col_ctrl, col_reset = st.columns([1.5, 2, 1.5])
+    
+    with col_select:
+        edit_target_name = st.selectbox("도장을 조절할 아이를 고르세요", df["아이 이름"].values)
+        current_status = df[df["아이 이름"] == edit_target_name]["도장 수량 / 상태"].values[0]
+        current_teacher = df[df["아이 이름"] == edit_target_name]["담당 선생님"].values[0]
+        st.write(f"현재 보유량: **{current_status}** (담당: {current_teacher})")
+        log_reason = st.text_input("변경 사유 입력 (메모)", placeholder="예: 받아쓰기 100점, 착한 일 함")
+
+    with col_ctrl:
+        st.write("") # 오류를 내던 st.markdown("<br>") 대신 안전한 빈 문자열 출력으로 변경
+        c1, c2 = st.columns(2)
+        
+        try:
+            current_num = int(''.join(filter(str.isdigit, current_status)))
+            unit = ''.join(filter(lambda x: not x.isdigit(), current_status)).strip()
+            if not unit: unit = "개"
+        except ValueError:
+            current_num = 0
+            unit = "개"
+            
+        if c1.button("➕ 1개 늘리기", use_container_width=True):
+            new_val = f"{current_num + 1} {unit}"
+            supabase.table("stamps").update({"status": new_val}).eq("stamp_name", edit_target_name).eq("center_id", st.session_state.center_id).execute()
+            reason = log_reason if log_reason else "도장 1개 지급"
+            save_log(st.session_state.center_id, edit_target_name, current_teacher, "증가", reason)
+            st.toast(f"👍 {edit_target_name}: {new_val}")
+            st.rerun()
+            
+        if c2.button("➖ 1개 줄이기", use_container_width=True):
+            if current_num > 0:
+                new_val = f"{current_num - 1} {unit}"
+                supabase.table("stamps").update({"status": new_val}).eq("stamp_name", edit_target_name).eq("center_id", st.session_state.center_id).execute()
+                reason = log_reason if log_reason else "도장 1개 회수/사용"
+                save_log(st.session_state.center_id, edit_target_name, current_teacher, "감소", reason)
+                st.toast(f"👎 {edit_target_name}: {new_val}")
+                st.rerun()
+            else:
+                st.warning("이미 도장 개수가 0개입니다.")
+                
+        new_text_status = st.text_input("상태 직접 입력 (문구 입력용)", value=current_status)
+        if st.button("✏️ 상태 텍스트 변경", use_container_width=True):
+            supabase.table("stamps").update({"status": new_text_status}).eq("stamp_name", edit_target_name).eq("center_id", st.session_state.center_id).execute()
+            reason = log_reason if log_reason else f"텍스트 변경: {new_text_status}"
+            save_log(st.session_state.center_id, edit_target_name, current_teacher, "텍스트변경", reason)
+            st.toast("✏️ 상태가 변경되었습니다.")
+            st.rerun()
+
+    with col_reset:
+        st.write("") # 에러 유발 코드 변경
+        st.write("🎁 **칭찬 보상 완료 처리**")
+        if st.button("🚨 보상 완료 (0개 초기화)", use_container_width=True, type="primary"):
+            new_val = f"0 {unit}"
+            supabase.table("stamps").update({"status": new_val}).eq("stamp_name", edit_target_name).eq("center_id", st.session_state.center_id).execute()
+            reason = log_reason if log_reason else "보상 완료 및 개수 초기화"
+            save_log(st.session_state.center_id, edit_target_name, current_teacher, "초기화", reason)
+            st.success(f"🎁 {edit_target_name} 어린이의 도장이 0개로 초기화되었습니다!")
+            st.rerun()
+
+st.markdown("---")
+
+# ----------------- [최하단 레이아웃] 실시간 히스토리 로그 -----------------
+st.subheader("📜 센터 도장 변경 히스토리 (최근 15개 내역)")
+log_df = load_logs(st.session_state.center_id)
+if len(log_df) > 0:
+    st.dataframe(log_df, use_container_width=True, hide_index=True)
+else:
+    st.info("아직 기록된 도장 변경 내역이 없습니다.")
