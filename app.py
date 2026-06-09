@@ -57,26 +57,67 @@ def save_log(center_id, stamp_name, owner, change_type, detail):
     }
     supabase.table("stamp_logs").insert(log_data).execute()
 
-# ==================== 1. 로그인 화면 ====================
+# ==================== 1. 로그인 및 회원가입 화면 ====================
 if not st.session_state.logged_in:
     st.title("🔖 돌봄센터 통합 도장 관리 시스템")
-    
-    # 화사함을 더하기 위해 이모지와 Streamlit 공식 배너 디자인 활용
     st.success("🌈 **안녕하세요! 다함께돌봄센터 관리 시스템 플랫폼입니다.** 바쁜 현장의 선생님들을 응원합니다!")
     
-    st.subheader("🔑 로그인")
-    with st.form("login_form"):
-        input_id = st.text_input("돌봄센터 ID", placeholder="예: center__")
-        input_pw = st.text_input("비밀번호", type="password")
-        login_btn = st.form_submit_button("아이들을 만나러 ^^")
-        
-        if login_btn:
-            if input_id and input_pw == "12345":
-                st.session_state.logged_in = True
-                st.session_state.center_id = input_id
-                st.rerun()
-            else:
-                st.error("ID 또는 비밀번호가 틀렸습니다.")
+    # 로그인과 회원가입을 탭으로 분리
+    tab1, tab2 = st.tabs(["🔑 로그인", "📝 새로운 돌봄센터 회원가입"])
+    
+    # --- [탭 1] 로그인 구역 ---
+    with tab1:
+        with st.form("login_form"):
+            input_id = st.text_input("돌봄센터 ID", placeholder="가입하신 센터 ID를 입력하세요 (예: center34)")
+            input_pw = st.text_input("비밀번호", type="password")
+            login_btn = st.form_submit_button("아이들을 만나러 ^^")
+            
+            if login_btn:
+                if input_id and input_pw:
+                    # DB에서 해당 센터의 계정 정보 조회
+                    user_res = supabase.table("center_users").select("*").eq("center_id", input_id).execute()
+                    if user_res.data and user_res.data[0]["password"] == input_pw:
+                        st.session_state.logged_in = True
+                        st.session_state.center_id = input_id
+                        st.rerun()
+                    # 기존 맛보기 테스트용 계정 예외 처리 유지 (비밀번호: 12345)
+                    elif input_pw == "12345":
+                        st.session_state.logged_in = True
+                        st.session_state.center_id = input_id
+                        st.rerun()
+                    else:
+                        st.error("❌ ID 또는 비밀번호가 일치하지 않습니다.")
+                else:
+                    st.warning("⚠️ ID와 비밀번호를 모두 입력해 주세요.")
+                    
+    # --- [탭 2] 회원가입 구역 ---
+    with tab2:
+        st.write("우리 돌봄센터만의 전용 대시보드 계정을 생성합니다.")
+        with st.form("register_center_form", clear_on_submit=True):
+            reg_id = st.text_input("희망하는 돌봄센터 ID", placeholder="영문, 숫자 조합 권장 (예: dharum34)")
+            reg_pw = st.text_input("접속 비밀번호 설정", type="password")
+            reg_pw_confirm = st.text_input("비밀번호 확인", type="password")
+            
+            register_btn = st.form_submit_button("돌봄센터 계정 만들기")
+            if register_btn:
+                if reg_id and reg_pw and reg_pw_confirm:
+                    if reg_pw != reg_pw_confirm:
+                        st.error("❌ 설정한 두 비밀번호가 서로 다릅니다. 다시 확인해 주세요.")
+                    else:
+                        # 아이디 중복 체크
+                        exist_res = supabase.table("center_users").select("center_id").eq("center_id", reg_id).execute()
+                        if exist_res.data:
+                            st.error("❌ 이미 존재하는 돌봄센터 ID입니다. 다른 ID를 사용해 주세요.")
+                        else:
+                            # DB에 새로운 돌봄센터 유저 저장
+                            new_user = {
+                                "center_id": reg_id,
+                                "password": reg_pw
+                            }
+                            supabase.table("center_users").insert(new_user).execute()
+                            st.success(f"🎉 '{reg_id}' 센터 계정이 성공적으로 생성되었습니다! 로그인 탭에서 로그인을 진행해 주세요.")
+                else:
+                    st.warning("⚠️ 모든 빈칸을 입력하셔야 회원가입이 가능합니다.")
     st.stop()
 
 # ==================== 2. 로그인 성공 후 올인원 메인 화면 ====================
@@ -87,7 +128,7 @@ with st.sidebar:
         st.session_state.center_id = ""
         st.rerun()
 
-# 메인 타이틀 구역 (따뜻하고 화사한 멘트 안내)
+# 메인 타이틀 구역
 st.title(f"📊 {st.session_state.center_id} 통합 도장 대시보드")
 st.markdown("✨ 아이들의 도장 현황 및 선생님들의 입력 히스토리를 한눈에 관리하는 안심 공간입니다.")
 st.markdown("---")
