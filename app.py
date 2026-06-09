@@ -33,30 +33,6 @@ def load_data(center_id):
     else:
         return pd.DataFrame(columns=["아이 이름", "담당 선생님", "등록일", "도장 수량 / 상태"])
 
-# --- 히스토리 로그 불러오기 함수 ---
-def load_logs(center_id):
-    response = supabase.table("stamp_logs").select("*").eq("center_id", center_id).order("created_at", descending=True).limit(15).execute()
-    data = response.data
-    if data:
-        df = pd.DataFrame(data)
-        df["created_at"] = pd.to_datetime(df["created_at"]).dt.strftime("%Y-%m-%d %H:%M")
-        df = df[["created_at", "stamp_name", "owner", "change_type", "detail"]]
-        df.columns = ["일시", "아이 이름", "선생님", "구분", "상세 메모"]
-        return df
-    else:
-        return pd.DataFrame(columns=["일시", "아이 이름", "선생님", "구분", "상세 메모"])
-
-# --- 로그 저장 함수 ---
-def save_log(center_id, stamp_name, owner, change_type, detail):
-    log_data = {
-        "center_id": center_id,
-        "stamp_name": stamp_name,
-        "owner": owner,
-        "change_type": change_type,
-        "detail": detail
-    }
-    supabase.table("stamp_logs").insert(log_data).execute()
-
 # ==================== 1. 로그인 및 회원가입 화면 ====================
 if not st.session_state.logged_in:
     st.title("🔖 돌봄센터 통합 도장 관리 시스템")
@@ -130,7 +106,7 @@ with st.sidebar:
 
 # 메인 타이틀 구역
 st.title(f"📊 {st.session_state.center_id} 통합 도장 대시보드")
-st.markdown("✨ 아이들의 도장 현황 및 선생님들의 입력 히스토리를 한눈에 관리하는 안심 공간입니다.")
+st.markdown("✨ 아이들의 도장 현황을 한눈에 관리하는 안심 공간입니다.")
 st.markdown("---")
 
 df = load_data(st.session_state.center_id)
@@ -160,7 +136,6 @@ with col_add:
                         "center_id": st.session_state.center_id
                     }
                     supabase.table("stamps").insert(new_data).execute()
-                    save_log(st.session_state.center_id, new_name, new_owner, "아이추가", f"초기 수량: {new_status}")
                     st.toast(f"🎉 '{new_name}' 어린이가 명단에 추가되었습니다!")
                     st.rerun()
             else:
@@ -173,7 +148,6 @@ with col_del:
         st.write(f"선택된 아이: **{del_target_name}**")
         if st.button("🚨 명단에서 완전히 삭제"):
             supabase.table("stamps").delete().eq("stamp_name", del_target_name).eq("center_id", st.session_state.center_id).execute()
-            save_log(st.session_state.center_id, del_target_name, "관리자", "아이삭제", "명단에서 제거됨")
             st.toast(f"🔥 '{del_target_name}' 어린이의 데이터가 삭제되었습니다.")
             st.rerun()
     else:
@@ -200,10 +174,9 @@ if len(df) > 0:
         current_status = df[df["아이 이름"] == edit_target_name]["도장 수량 / 상태"].values[0]
         current_teacher = df[df["아이 이름"] == edit_target_name]["담당 선생님"].values[0]
         st.write(f"현재 보유량: **{current_status}** (담당: {current_teacher})")
-        log_reason = st.text_input("변경 사유 입력 (메모)", placeholder="예: 받아쓰기 100점, 착한 일 함")
 
     with col_ctrl:
-        st.write("") # 오류를 내던 st.markdown("<br>") 대신 안전한 빈 문자열 출력으로 변경
+        st.write("") 
         c1, c2 = st.columns(2)
         
         try:
@@ -217,8 +190,6 @@ if len(df) > 0:
         if c1.button("➕ 1개 늘리기", use_container_width=True):
             new_val = f"{current_num + 1} {unit}"
             supabase.table("stamps").update({"status": new_val}).eq("stamp_name", edit_target_name).eq("center_id", st.session_state.center_id).execute()
-            reason = log_reason if log_reason else "도장 1개 지급"
-            save_log(st.session_state.center_id, edit_target_name, current_teacher, "증가", reason)
             st.toast(f"👍 {edit_target_name}: {new_val}")
             st.rerun()
             
@@ -226,8 +197,6 @@ if len(df) > 0:
             if current_num > 0:
                 new_val = f"{current_num - 1} {unit}"
                 supabase.table("stamps").update({"status": new_val}).eq("stamp_name", edit_target_name).eq("center_id", st.session_state.center_id).execute()
-                reason = log_reason if log_reason else "도장 1개 회수/사용"
-                save_log(st.session_state.center_id, edit_target_name, current_teacher, "감소", reason)
                 st.toast(f"👎 {edit_target_name}: {new_val}")
                 st.rerun()
             else:
@@ -236,28 +205,14 @@ if len(df) > 0:
         new_text_status = st.text_input("상태 직접 입력 (문구 입력용)", value=current_status)
         if st.button("✏️ 상태 텍스트 변경", use_container_width=True):
             supabase.table("stamps").update({"status": new_text_status}).eq("stamp_name", edit_target_name).eq("center_id", st.session_state.center_id).execute()
-            reason = log_reason if log_reason else f"텍스트 변경: {new_text_status}"
-            save_log(st.session_state.center_id, edit_target_name, current_teacher, "텍스트변경", reason)
             st.toast("✏️ 상태가 변경되었습니다.")
             st.rerun()
 
     with col_reset:
-        st.write("") # 에러 유발 코드 변경
+        st.write("") 
         st.write("🎁 **칭찬 보상 완료 처리**")
         if st.button("🚨 보상 완료 (0개 초기화)", use_container_width=True, type="primary"):
             new_val = f"0 {unit}"
             supabase.table("stamps").update({"status": new_val}).eq("stamp_name", edit_target_name).eq("center_id", st.session_state.center_id).execute()
-            reason = log_reason if log_reason else "보상 완료 및 개수 초기화"
-            save_log(st.session_state.center_id, edit_target_name, current_teacher, "초기화", reason)
             st.success(f"🎁 {edit_target_name} 어린이의 도장이 0개로 초기화되었습니다!")
             st.rerun()
-
-st.markdown("---")
-
-# ----------------- [최하단 레이아웃] 실시간 히스토리 로그 -----------------
-st.subheader("📜 센터 도장 변경 히스토리 (최근 15개 내역)")
-log_df = load_logs(st.session_state.center_id)
-if len(log_df) > 0:
-    st.dataframe(log_df, use_container_width=True, hide_index=True)
-else:
-    st.info("아직 기록된 도장 변경 내역이 없습니다.")
