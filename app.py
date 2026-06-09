@@ -7,13 +7,19 @@ from supabase import create_client, Client
 st.set_page_config(page_title="다함께돌봄센터 통합 도장 관리 시스템", page_icon="🔖", layout="wide")
 
 # ====================================================================
-# 🖼️ [배경 화면 설정 구역] 
+# 🖼️ [배경 화면 설정 구역] - 오류가 절대 안 나도록 리스트 결합 방식으로 수정
 # ====================================================================
 BACKGROUND_IMAGE_URL = "https://images.unsplash.com/photo-1516627145497-ae6968895b74?auto=format&fit=crop&q=80&w=1200"
 
-# 파이썬 3.14 내부 컴파일 에러를 원천 차단하기 위해 문자열 결합 방식으로 안전하게 수정
-css_style = "<style>.stApp { background-image: linear-gradient(rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.88)), url('" + BACKGROUND_IMAGE_URL + "'); background-size: cover; background-position: center; background-attachment: fixed; } h1, h2, h3, p, span, label, .stMarkdown { color: #2C3E50 !important; }</style>"
-st.markdown(css_style, unsafe_allow_index=True)
+css_parts = [
+    "<style>",
+    ".stApp { background-image: linear-gradient(rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.88)), url('",
+    BACKGROUND_IMAGE_URL,
+    "'); background-size: cover; background-position: center; background-attachment: fixed; }",
+    "h1, h2, h3, p, span, label, .stMarkdown { color: #2C3E50 !important; }",
+    "</style>"
+]
+st.markdown("".join(css_parts), unsafe_allow_index=True)
 # ====================================================================
 
 # --- Supabase 연결 설정 ---
@@ -31,7 +37,7 @@ if "logged_in" not in st.session_state:
 if "center_id" not in st.session_state:
     st.session_state.center_id = ""
 
-# --- 데이터 불러오기 함수 ---
+# --- 데이터 불러오기 함수 (아이 이름순 정렬) ---
 def load_data(center_id):
     response = supabase.table("stamps").select("*").eq("center_id", center_id).order("stamp_name").execute()
     data = response.data
@@ -45,11 +51,10 @@ def load_data(center_id):
 
 # --- 히스토리 로그 불러오기 함수 ---
 def load_logs(center_id):
-    response = supabase.table("stamp_logs").select("*").eq("center_id", center_id).order("created_at", descending=True).limit(20).execute()
+    response = supabase.table("stamp_logs").select("*").eq("center_id", center_id).order("created_at", descending=True).limit(15).execute()
     data = response.data
     if data:
         df = pd.DataFrame(data)
-        # 시간 가독성 있게 변경
         df["created_at"] = pd.to_datetime(df["created_at"]).dt.strftime("%Y-%m-%d %H:%M")
         df = df[["created_at", "stamp_name", "owner", "change_type", "detail"]]
         df.columns = ["일시", "아이 이름", "선생님", "구분", "상세 메모"]
@@ -57,7 +62,7 @@ def load_logs(center_id):
     else:
         return pd.DataFrame(columns=["일시", "아이 이름", "선생님", "구분", "상세 메모"])
 
-# --- 로그 저장 공통 함수 ---
+# --- 로그 저장 함수 ---
 def save_log(center_id, stamp_name, owner, change_type, detail):
     log_data = {
         "center_id": center_id,
@@ -89,7 +94,6 @@ if not st.session_state.logged_in:
     st.stop()
 
 # ==================== 2. 로그인 성공 후 올인원 메인 화면 ====================
-
 with st.sidebar:
     st.info(f"🏠 소속: {st.session_state.center_id}\n\n오늘도 아이들과 좋은 하루 보내세요! ❤️")
     if st.button("로그아웃"):
@@ -99,7 +103,7 @@ with st.sidebar:
 
 # 메인 타이틀
 st.title(f"📊 {st.session_state.center_id} 통합 도장 대시보드")
-st.write("아이들의 도장/칭찬 스탬프 현황 및 히스토리를 한 눈에 관리하는 공간입니다.")
+st.write("아이들의 도장 현황 및 선생님들의 입력 히스토리를 관리하는 공간입니다.")
 st.markdown("---")
 
 df = load_data(st.session_state.center_id)
@@ -129,14 +133,14 @@ with col_add:
                         "center_id": st.session_state.center_id
                     }
                     supabase.table("stamps").insert(new_data).execute()
-                    save_log(st.session_state.center_id, new_name, new_owner, "아이추가", f"초기 상태: {new_status}")
-                    st.toast(f"🎉 '{new_name}' 어린이가 명단에 추가되었습니다!")
+                    save_log(st.session_state.center_id, new_name, new_owner, "아이추가", f"초기 수량: {new_status}")
+                    st.toast(f"🎉 '{new_name}' 어린이가 목록에 추가되었습니다!")
                     st.rerun()
             else:
                 st.warning("⚠️ 모든 빈칸을 채워주세요.")
 
 with col_del:
-    st.subheader("❌ 아이 명단 삭제")
+    st.subheader("❌ 아이 삭제")
     if len(df) > 0:
         del_target_name = st.selectbox("삭제할 아이 이름을 선택하세요", df["아이 이름"].values)
         st.write(f"선택된 아이: **{del_target_name}**")
@@ -159,9 +163,8 @@ else:
 
 st.markdown("---")
 
-# ----------------- [하단 레이아웃] 간편 도장 수량 증감 및 초기화 -----------------
+# ----------------- [하단 레이아웃] 수량 증감 / 상태 변경 / 보상 초기화 -----------------
 st.subheader("🔄 간편 도장 수량 조절 및 보상 초기화")
-
 if len(df) > 0:
     col_select, col_ctrl, col_reset = st.columns([1.5, 2, 1.5])
     
@@ -170,10 +173,10 @@ if len(df) > 0:
         current_status = df[df["아이 이름"] == edit_target_name]["도장 수량 / 상태"].values[0]
         current_teacher = df[df["아이 이름"] == edit_target_name]["담당 선생님"].values[0]
         st.write(f"현재 보유량: **{current_status}** (담당: {current_teacher})")
-        log_reason = st.text_input("변경 사유 입력 (메모)", placeholder="예: 받아쓰기 100점, 칭찬 스티커 판 채움")
+        log_reason = st.text_input("변경 사유 입력 (메모)", placeholder="예: 받아쓰기 100점, 착한 일 함")
 
     with col_ctrl:
-        st.markdown("<br>", unsafe_allow_index=True) # 줄맞춤용
+        st.markdown("<br>", unsafe_allow_index=True)
         c1, c2 = st.columns(2)
         
         try:
@@ -203,8 +206,7 @@ if len(df) > 0:
             else:
                 st.warning("이미 도장 개수가 0개입니다.")
                 
-        # 상태 텍스트 직접 변경 창
-        new_text_status = st.text_input("상태 직접 입력 (글자로 입력할 때)", value=current_status)
+        new_text_status = st.text_input("상태 직접 입력 (문구 입력용)", value=current_status)
         if st.button("✏️ 상태 텍스트 변경", use_container_width=True):
             supabase.table("stamps").update({"status": new_text_status}).eq("stamp_name", edit_target_name).eq("center_id", st.session_state.center_id).execute()
             reason = log_reason if log_reason else f"텍스트 변경: {new_text_status}"
@@ -213,12 +215,12 @@ if len(df) > 0:
             st.rerun()
 
     with col_reset:
-        st.markdown("<br>", unsafe_allow_index=True) # 줄맞춤용
-        st.markdown("<div style='text-align: center; font-weight: bold; color: #D35400;'>🎁 선물을 받았나요?</div>", unsafe_allow_index=True)
-        if st.button("🚨 보상 완료 (0개로 초기화)", use_container_width=True, type="primary"):
+        st.markdown("<br>", unsafe_allow_index=True)
+        st.markdown("<div style='text-align: center; font-weight: bold; color: #E67E22;'>🎁 칭찬 보상 완료 처리</div>", unsafe_allow_index=True)
+        if st.button("🚨 보상 완료 (0개 초기화)", use_container_width=True, type="primary"):
             new_val = f"0 {unit}"
             supabase.table("stamps").update({"status": new_val}).eq("stamp_name", edit_target_name).eq("center_id", st.session_state.center_id).execute()
-            reason = log_reason if log_reason else "보상 지급 완료 및 개수 리셋"
+            reason = log_reason if log_reason else "보상 완료 및 개수 초기화"
             save_log(st.session_state.center_id, edit_target_name, current_teacher, "초기화", reason)
             st.success(f"🎁 {edit_target_name} 어린이의 도장이 0개로 초기화되었습니다!")
             st.rerun()
@@ -226,7 +228,7 @@ if len(df) > 0:
 st.markdown("---")
 
 # ----------------- [최하단 레이아웃] 실시간 히스토리 로그 -----------------
-st.subheader("📜 우리 센터 도장 변경 히스토리 (최근 20개 내역)")
+st.subheader("📜 센터 도장 변경 히스토리 (최근 15개 내역)")
 log_df = load_logs(st.session_state.center_id)
 if len(log_df) > 0:
     st.dataframe(log_df, use_container_width=True, hide_index=True)
