@@ -6,6 +6,30 @@ from supabase import create_client, Client
 # 페이지 설정
 st.set_page_config(page_title="다함께돌봄센터 통합 도장 관리 시스템", page_icon="🔖", layout="wide")
 
+# ====================================================================
+# 🖼️ [배경 화면 설정 구역] 
+# 여기에 원하는 이미지 주소(끝이 .jpg, .png 등으로 끝나는 링크)를 넣으시면 배경이 바뀝니다!
+# 기본값으로 화사하고 따뜻한 느낌의 아이들 일러스트/사진 주소를 넣어두었습니다.
+# ====================================================================
+BACKGROUND_IMAGE_URL = "https://images.unsplash.com/photo-1516627145497-ae6968895b74?auto=format&fit=crop&q=80&w=1200"
+
+# 에러가 나지 않도록 파이썬 연산 없이 순수 문자열 매핑으로 스타일 주입
+st.markdown("""
+<style>
+.stApp {
+    background-image: linear-gradient(rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.88)), url("%s");
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+/* 다크모드 대응 및 글자 가독성을 위해 메인 텍스트 색상 고정 */
+h1, h2, h3, p, span, label, .stMarkdown {
+    color: #2C3E50 !important;
+}
+</style>
+""" % BACKGROUND_IMAGE_URL, unsafe_allow_index=True)
+# ====================================================================
+
 # --- Supabase 연결 설정 ---
 try:
     url: str = st.secrets["SUPABASE_URL"]
@@ -28,7 +52,6 @@ def load_data(center_id):
     
     if data:
         df = pd.DataFrame(data)
-        # 필요한 컬럼만 선택 (ID 제외)
         df = df[["stamp_name", "owner", "reg_date", "status"]]
         df.columns = ["아이 이름", "담당 선생님", "등록일", "도장 수량 / 상태"]
         return df
@@ -85,7 +108,6 @@ with col_add:
         add_btn = st.form_submit_button("대시보드에 추가하기")
         if add_btn:
             if new_name and new_owner:
-                # 이름 중복 검사 (같은 센터 내에서만)
                 check_res = supabase.table("stamps").select("stamp_name").eq("stamp_name", new_name).eq("center_id", st.session_state.center_id).execute()
                 if check_res.data:
                     st.error("❌ 이미 대시보드에 존재하는 아이 이름입니다.")
