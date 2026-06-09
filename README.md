@@ -39,5 +39,5 @@
 "Stamp-Management-System"은 Python, Streamlit, Supabase를 통해서 구현했습니다.
 다시 한번 감사의 말씀 전해드립니다.
 
-- emotionline -
-- 기술을 등에 업고 -
+- emotionline
+- 기술을 등에 업고
