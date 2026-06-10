@@ -1,5 +1,5 @@
 # 🔖 다함께돌봄센터 통합 도장/스티커 관리 시스템
-> **"아이들이 직접 도장을 찍는 손맛은 지켜주면서도, 혹시 모를 분실은 완벽하게 방지합니다."**
+> **"아이들이 직접 도장/스티커를 찍는 손맛은 지켜주면서도, 혹시 모를 분실은 완벽하게 방지합니다."**
 
 ![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=Streamlit&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=Supabase&logoColor=white)
