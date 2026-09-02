@@ -6,6 +6,51 @@ from supabase import create_client, Client
 # 페이지 설정
 st.set_page_config(page_title="다함께돌봄센터 통합 도장 관리 시스템", page_icon="🔖", layout="wide")
 
+# --- 자연스러운 빛과 그늘의 숲 테마 CSS ---
+forest_theme_css = """
+<style>
+/* 전체 화면 배경: 잎사귀 사이의 부드러운 빛·그늘 숲 + 눈이 편안한 반투명 오버레이 */
+.stApp {
+    background: linear-gradient(rgba(247, 250, 248, 0.86), rgba(240, 246, 242, 0.90)),
+                url("https://png.pngtree.com/thumb_back/fh260/background/20250423/pngtree-misty-morning-light-gently-filtering-through-tall-pine-trees-and-reflecting-image_17213874.jpg");
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+/* 사이드바: 숲 느낌을 살린 차분한 세이지 그린 톤 */
+[data-testid="stSidebar"] {
+    background-color: rgba(238, 245, 240, 0.92) !important;
+    border-right: 1px solid rgba(165, 195, 175, 0.35);
+}
+
+/* 입력 폼 및 확장 영역 카드 스타일링 */
+[data-testid="stForm"], div[data-testid="stExpander"] {
+    background-color: rgba(255, 255, 255, 0.92) !important;
+    border-radius: 14px;
+    padding: 20px;
+    border: 1px solid rgba(170, 205, 180, 0.35);
+    box-shadow: 0 4px 14px rgba(30, 60, 45, 0.05);
+}
+
+/* 실시간 도장 현황판(데이터프레임) 가독성 확보 */
+[data-testid="stDataFrame"] {
+    background-color: rgba(255, 255, 255, 0.96);
+    border-radius: 10px;
+    padding: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+/* 기본 강조 버튼: 편안한 딥 포레스트 그린 */
+button[kind="primary"] {
+    background-color: #2E7D32 !important;
+    border-color: #2E7D32 !important;
+}
+</style>
+"""
+st.markdown(forest_theme_css, unsafe_allow_html=True)
+
+
 # --- Supabase 연결 설정 ---
 try:
     url: str = st.secrets["SUPABASE_URL"]
