@@ -7,17 +7,28 @@ from supabase import create_client, Client
 st.set_page_config(page_title="다함께돌봄센터 통합 도장 관리 시스템", page_icon="🔖", layout="wide")
 
 # --- 자연스러운 빛과 그늘의 숲 테마 CSS ---
+# --- 자연스러운 빛과 그늘의 숲 테마 CSS ---
 forest_theme_css = """
 <style>
-/* 전체 화면 배경: 잎사귀 사이의 부드러운 빛·그늘 숲 + 눈이 편안한 반투명 오버레이 */
+/* 전체 화면 배경: 오버레이 없이 원본 숲 이미지를 선명하게 바로 표시 */
 .stApp {
-    background: linear-gradient(rgba(247, 250, 248, 0.86), rgba(240, 246, 242, 0.90)),
-                url("https://png.pngtree.com/thumb_back/fh260/background/20250423/pngtree-misty-morning-light-gently-filtering-through-tall-pine-trees-and-reflecting-image_17213874.jpg");
+    background-image: url("https://png.pngtree.com/thumb_back/fh260/background/20250423/pngtree-misty-morning-light-gently-filtering-through-tall-pine-trees-and-reflecting-image_17213874.jpg");
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
 }
 
+/* 상단 투명 헤더 처리 */
+header[data-testid="stHeader"] {
+    background: transparent !important;
+}
+
+/* 폼과 박스 영역에만 은은한 반투명을 주어 글씨 가독성 유지 */
+[data-testid="stForm"] {
+    background-color: rgba(255, 255, 255, 0.75);
+    border-radius: 12px;
+    padding: 20px;
+}
 </style>
 """
 st.markdown(forest_theme_css, unsafe_allow_html=True)
