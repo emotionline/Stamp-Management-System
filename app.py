@@ -7,10 +7,9 @@ from supabase import create_client, Client
 st.set_page_config(page_title="다함께돌봄센터 통합 도장 관리 시스템", page_icon="🔖", layout="wide")
 
 # --- 자연스러운 빛과 그늘의 숲 테마 CSS ---
-# --- 자연스러운 빛과 그늘의 숲 테마 CSS ---
 forest_theme_css = """
 <style>
-/* 전체 화면 배경: 오버레이 없이 원본 숲 이미지를 선명하게 바로 표시 */
+/* 전체 화면 배경 */
 .stApp {
     background-image: url("https://png.pngtree.com/thumb_back/fh260/background/20250423/pngtree-misty-morning-light-gently-filtering-through-tall-pine-trees-and-reflecting-image_17213874.jpg");
     background-size: cover;
@@ -23,11 +22,45 @@ header[data-testid="stHeader"] {
     background: transparent !important;
 }
 
-/* 폼과 박스 영역에만 은은한 반투명을 주어 글씨 가독성 유지 */
+/* 1. 최상단 메인 제목: 선명한 화이트 + 뚜렷한 음영으로 입체감 부여 */
+h1 {
+    color: #FFFFFF !important;
+    font-weight: 800 !important;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* 2. 안내 박스(알림창): 밝은 초록 배경 위에 글씨가 묻히지 않도록 정돈 */
+div[data-testid="stAlert"] {
+    background-color: rgba(255, 255, 255, 0.88) !important;
+    border: 1px solid rgba(46, 125, 50, 0.3) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+div[data-testid="stAlert"] p {
+    color: #1B4D2E !important;
+    font-weight: 600 !important;
+}
+
+/* 3. 로그인/회원가입 탭 텍스트 강조 */
+button[data-baseweb="tab"] {
+    color: #FFFFFF !important;
+    font-weight: 700 !important;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8) !important;
+}
+button[data-baseweb="tab"][aria-selected="true"] {
+    color: #A3E635 !important; /* 선택된 탭은 싱그러운 라임 그린 */
+}
+
+/* 4. 로그인 폼: 라벨 및 내부 텍스트 선명화 */
 [data-testid="stForm"] {
-    background-color: rgba(255, 255, 255, 0.75);
-    border-radius: 12px;
-    padding: 20px;
+    background-color: rgba(255, 255, 255, 0.85) !important;
+    border-radius: 14px !important;
+    padding: 24px !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12) !important;
+}
+[data-testid="stForm"] label {
+    color: #1F2937 !important;
+    font-weight: 700 !important;
 }
 </style>
 """
