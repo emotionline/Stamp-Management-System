@@ -18,39 +18,6 @@ forest_theme_css = """
     background-attachment: fixed;
 }
 
-/* 사이드바: 숲 느낌을 살린 차분한 세이지 그린 톤 */
-[data-testid="stSidebar"] {
-    background-color: rgba(238, 245, 240, 0.92) !important;
-    border-right: 1px solid rgba(165, 195, 175, 0.35);
-}
-
-/* 입력 폼 및 확장 영역 카드 스타일링 */
-[data-testid="stForm"], div[data-testid="stExpander"] {
-    background-color: rgba(255, 255, 255, 0.92) !important;
-    border-radius: 14px;
-    padding: 20px;
-    border: 1px solid rgba(170, 205, 180, 0.35);
-    box-shadow: 0 4px 14px rgba(30, 60, 45, 0.05);
-}
-
-/* 실시간 도장 현황판(데이터프레임) 가독성 확보 */
-[data-testid="stDataFrame"] {
-    background-color: rgba(255, 255, 255, 0.96);
-    border-radius: 10px;
-    padding: 6px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-/* 기본 강조 버튼: 편안한 딥 포레스트 그린 */
-button[kind="primary"] {
-    background-color: #2E7D32 !important;
-    border-color: #2E7D32 !important;
-}
-</style>
-"""
-st.markdown(forest_theme_css, unsafe_allow_html=True)
-
-
 # --- Supabase 연결 설정 ---
 try:
     url: str = st.secrets["SUPABASE_URL"]
