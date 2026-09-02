@@ -18,6 +18,10 @@ forest_theme_css = """
     background-attachment: fixed;
 }
 
+</style>
+"""
+st.markdown(forest_theme_css, unsafe_allow_html=True)
+
 # --- Supabase 연결 설정 ---
 try:
     url: str = st.secrets["SUPABASE_URL"]
